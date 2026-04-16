@@ -1,4 +1,4 @@
-﻿const DB_STUDY_DATA = {
+const DB_STUDY_DATA = {
   course: {
     name: "Advanced Database Systems",
     code: "CE/IS 279",
@@ -981,7 +981,7 @@ db.Products.find({})`,
     }
   ]
 };
-          type: "mcq",
+
           question: "In SQL, which of the following is not a data definition language commands?",
           options: ["A) RENAME", "B) REVOKE", "C) GRANT", "D) UPDATE"],
           answer: "D"
