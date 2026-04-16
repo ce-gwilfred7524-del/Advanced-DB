@@ -663,6 +663,9 @@
     <button class="btn btn-ghost btn-sm" onclick="Portal.openFlashcards()">
       <span>⚡</span><span>Flashcards</span>
     </button>
+    <button class="btn btn-ghost btn-sm" onclick="Portal.promptForApiKey()">
+      <span>⚙️</span><span>API Key</span>
+    </button>
     <button class="btn btn-ghost btn-sm" onclick="Portal.resetProgress()">
       <span>🔄</span><span>Reset</span>
     </button>
@@ -1428,7 +1431,7 @@ const Portal = (() => {
     showToast('Progress reset');
   }
 
-  return { init, setActiveSection, toggleCard, saveAnswer, showAnswer, copyCode, aiExplain, selectMCQ, toggleAiPanel, aiChatKeydown, sendAiChat, setFilter, openFlashcards, closeFlashcards, fcReveal, fcAiExplain, fcMark, fcNext, fcPrev, resetProgress };
+  return { init, setActiveSection, toggleCard, saveAnswer, showAnswer, copyCode, aiExplain, selectMCQ, toggleAiPanel, aiChatKeydown, sendAiChat, setFilter, openFlashcards, closeFlashcards, fcReveal, fcAiExplain, fcMark, fcNext, fcPrev, resetProgress, promptForApiKey };
 })();
 
 document.addEventListener('DOMContentLoaded', Portal.init);
