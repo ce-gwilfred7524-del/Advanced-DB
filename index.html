@@ -1160,8 +1160,10 @@ const Portal = (() => {
         })
       });
       if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        const errMsg = errData.error?.message || 'API error ' + res.status;
         if (res.status === 401) throw new Error('Invalid Groq API key. Get one from https://console.groq.com/keys');
-        throw new Error('API error ' + res.status);
+        throw new Error(errMsg);
       }
       const data = await res.json();
       const full = data.choices?.[0]?.message?.content || 'No response';
@@ -1216,7 +1218,12 @@ const Portal = (() => {
 
     try {
       if (!state.apiKey) throw new Error('API key not set');
-      const groqMessages = state.aiMessages.map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content }));
+      const groqMessages = [
+        { role: 'system', content: 'You are an Advanced Database Systems tutor at the University of Mines and Technology, Ghana. Course: CE/IS 279 by Dr. Eric Affum. Help students understand: Stored Procedures, Triggers, SQL Functions, Relational Algebra, NoSQL, MongoDB, Database Security, Transactions, CAP Theorem. Be friendly, encouraging, and give clear explanations with examples. Use numbered lists when explaining multiple points. Keep answers focused and academic.' }
+      ];
+      state.aiMessages.forEach(m => {
+        groqMessages.push({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content });
+      });
       const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: { 
@@ -1226,12 +1233,14 @@ const Portal = (() => {
         body: JSON.stringify({
           model: 'mixtral-8x7b-32768',
           max_tokens: 1000,
-          system: 'You are an Advanced Database Systems tutor at the University of Mines and Technology, Ghana. Course: CE/IS 279 by Dr. Eric Affum. Help students understand: Stored Procedures, Triggers, SQL Functions, Relational Algebra, NoSQL, MongoDB, Database Security, Transactions, CAP Theorem. Be friendly, encouraging, and give clear explanations with examples. Use numbered lists when explaining multiple points. Keep answers focused and academic.',
           messages: groqMessages
         })
       });
 
-      if (!res.ok) throw new Error('API error ' + res.status);
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error?.message || 'API error ' + res.status);
+      }
       const respData = await res.json();
       const full = respData.choices?.[0]?.message?.content || 'No response';
       const el = document.getElementById(loadId);
@@ -1333,7 +1342,10 @@ const Portal = (() => {
           }]
         })
       });
-      if (!res.ok) throw new Error('API error ' + res.status);
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error?.message || 'API error ' + res.status);
+      }
       const data = await res.json();
       const text = data.choices?.[0]?.message?.content || 'Unable to get explanation.';
       document.getElementById('fcAnswer').textContent = q.answer + '\n\n💡 ' + text;
