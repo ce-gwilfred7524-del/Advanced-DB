@@ -824,12 +824,16 @@ const Portal = (() => {
     aiLoading: false,
     fcIndex: 0,
     fcList: [],
-    fcRevealed: false
+    fcRevealed: false,
+    apiKey: null
   };
 
   // ── INIT ────────────────────────────────────────────────────
   function init() {
     loadState();
+    const savedKey = localStorage.getItem('anthropic_api_key');
+    if (savedKey) state.apiKey = savedKey;
+    else promptForApiKey();
     renderTabs();
     renderStats();
     setActiveSection(DB_STUDY_DATA.sections[0].id);
@@ -837,6 +841,23 @@ const Portal = (() => {
     bindKeyboard();
     updateProgress();
     buildFcList();
+  }
+
+  function promptForApiKey() {
+    const key = prompt('Enter your Anthropic API key (from https://console.anthropic.com):\n\nYou can create a free account and get API credits. Leave blank to skip AI features.');
+    if (key && key.trim()) {
+      state.apiKey = key.trim();
+      localStorage.setItem('anthropic_api_key', state.apiKey);
+      alert('API key saved! AI features are now enabled.');
+    } else {
+      alert('AI features require an API key. You can add it later by clicking Settings.');
+    }
+  }
+
+  function resetApiKey() {
+    localStorage.removeItem('anthropic_api_key');
+    state.apiKey = null;
+    promptForApiKey();
   }
 
   // ── PERSISTENCE ─────────────────────────────────────────────
@@ -1121,9 +1142,13 @@ const Portal = (() => {
     </div>`;
 
     try {
+      if (!state.apiKey) throw new Error('API key not set');
       const res = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-api-key': state.apiKey
+        },
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
           max_tokens: 1000,
@@ -1132,7 +1157,10 @@ const Portal = (() => {
           messages: [{ role: 'user', content: `Explain clearly for a student:\n\nQuestion: ${q.question}\n\n${q.type === 'mcq' ? `Correct Answer: ${q.answer}\n${q.explanation || ''}` : (q.answer ? `Answer: ${q.answer}` : '')}` }]
         })
       });
-      if (!res.ok) throw new Error('API error ' + res.status);
+      if (!res.ok) {
+        if (res.status === 401) throw new Error('Invalid API key. Please check your Anthropic API key.');
+        throw new Error('API error ' + res.status);
+      }
       const reader = res.body.getReader();
       const dec = new TextDecoder();
       let full = '';
@@ -1206,9 +1234,13 @@ const Portal = (() => {
     msgs.scrollTop = msgs.scrollHeight;
 
     try {
+      if (!state.apiKey) throw new Error('API key not set');
       const res = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-api-key': state.apiKey
+        },
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
           max_tokens: 1000,
@@ -1247,7 +1279,7 @@ const Portal = (() => {
 
     } catch(err) {
       const el = document.getElementById(loadId);
-      if (el) el.textContent = 'Sorry, I encountered an error. Please try again.';
+      if (el) el.textContent = 'Error: ' + (err.message || 'Failed to get response. Check your API key.');
     }
 
     state.aiLoading = false;
@@ -1324,9 +1356,13 @@ const Portal = (() => {
     const btn = document.getElementById('fcAiBtn');
     btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
     try {
+      if (!state.apiKey) throw new Error('API key not set');
       const res = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'x-api-key': state.apiKey
+        },
         body: JSON.stringify({
           model: 'claude-sonnet-4-20250514',
           max_tokens: 600,
@@ -1336,10 +1372,16 @@ const Portal = (() => {
           }]
         })
       });
+      if (!res.ok) {
+        if (res.status === 401) throw new Error('Invalid API key');
+        throw new Error('API error ' + res.status);
+      }
       const data = await res.json();
       const text = data.content?.[0]?.text || 'Unable to get explanation.';
       document.getElementById('fcAnswer').textContent = q.answer + '\n\n💡 ' + text;
-    } catch(e) {}
+    } catch(e) {
+      alert('AI Error: ' + (e.message || 'Check your API key'));
+    }
     btn.disabled = false; btn.innerHTML = '✦ AI Explain';
   }
 
