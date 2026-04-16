@@ -844,13 +844,13 @@ const Portal = (() => {
   }
 
   function promptForApiKey() {
-    const key = prompt('Enter your Anthropic API key (from https://console.anthropic.com):\n\nYou can create a free account and get API credits. Leave blank to skip AI features.');
+    const key = prompt('Enter your Anthropic Claude API key (from https://console.anthropic.com):\n\n(Note: This will be stored locally in your browser. Never share API keys!)');
     if (key && key.trim()) {
       state.apiKey = key.trim();
       localStorage.setItem('anthropic_api_key', state.apiKey);
-      alert('API key saved! AI features are now enabled.');
+      alert('✓ API key saved! AI features are now enabled.\n\nTest it by clicking "✦ AI Explain" on any question.');
     } else {
-      alert('AI features require an API key. You can add it later by clicking Settings.');
+      alert('AI features require an API key. Get one free at https://console.anthropic.com');
     }
   }
 
@@ -1143,54 +1143,34 @@ const Portal = (() => {
 
     try {
       if (!state.apiKey) throw new Error('API key not set');
+      const streamEl = document.getElementById('ai-stream-' + id);
       const res = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'x-api-key': state.apiKey
+          'x-api-key': state.apiKey,
+          'anthropic-version': '2023-06-01'
         },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-3-5-sonnet-20241022',
           max_tokens: 1000,
-          stream: true,
           system: `You are an expert Advanced Database Systems tutor at the University of Mines and Technology, Ghana. Course: CE/IS 279 by Dr. Eric Affum. Topics: Stored Procedures, Triggers, SQL Functions, Relational Algebra, NoSQL, MongoDB, Database Security (GRANT/REVOKE), Transactions, CAP Theorem. Provide clear, student-friendly explanations with examples. For code, show correct SQL/MongoDB. Keep responses concise (150-200 words). Use plain text with no markdown symbols. If multiple points, use numbered format.`,
           messages: [{ role: 'user', content: `Explain clearly for a student:\n\nQuestion: ${q.question}\n\n${q.type === 'mcq' ? `Correct Answer: ${q.answer}\n${q.explanation || ''}` : (q.answer ? `Answer: ${q.answer}` : '')}` }]
         })
       });
       if (!res.ok) {
-        if (res.status === 401) throw new Error('Invalid API key. Please check your Anthropic API key.');
+        if (res.status === 401) throw new Error('Invalid API key. Check your Anthropic API key.');
         throw new Error('API error ' + res.status);
       }
-      const reader = res.body.getReader();
-      const dec = new TextDecoder();
-      let full = '';
-      const streamEl = document.getElementById('ai-stream-' + id);
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const chunk = dec.decode(value);
-        for (const line of chunk.split('\n')) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
-            if (data === '[DONE]') continue;
-            try {
-              const parsed = JSON.parse(data);
-              if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
-                full += parsed.delta.text;
-                if (streamEl) streamEl.innerHTML = escHtml(full) + '<span class="ai-cursor"></span>';
-              }
-            } catch(e) {}
-          }
-        }
-      }
+      const data = await res.json();
+      const full = data.content?.[0]?.text || 'No response';
       if (streamEl) streamEl.textContent = full;
       state.answeredCards.add(id);
       saveState(); renderStats();
     } catch(err) {
       el.innerHTML = `<div class="answer-box ai-box">
         <div class="answer-box-header">⚠ Error</div>
-        <div class="answer-box-body"><p class="answer-text">Could not connect to AI. Please try again.</p></div>
+        <div class="answer-box-body"><p class="answer-text">Error: ${escHtml(err.message)}</p></div>
       </div>`;
     }
     if (btn) { btn.disabled = false; btn.innerHTML = '✦ AI Explain'; }
@@ -1239,47 +1219,27 @@ const Portal = (() => {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'x-api-key': state.apiKey
+          'x-api-key': state.apiKey,
+          'anthropic-version': '2023-06-01'
         },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-3-5-sonnet-20241022',
           max_tokens: 1000,
-          stream: true,
           system: `You are an Advanced Database Systems tutor at the University of Mines and Technology, Ghana. Course: CE/IS 279 by Dr. Eric Affum. Help students understand: Stored Procedures, Triggers, SQL Functions, Relational Algebra, NoSQL, MongoDB, Database Security, Transactions, CAP Theorem. Be friendly, encouraging, and give clear explanations with examples. Use numbered lists when explaining multiple points. Keep answers focused and academic.`,
           messages: state.aiMessages
         })
       });
 
-      const reader = res.body.getReader();
-      const dec = new TextDecoder();
-      let full = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        const chunk = dec.decode(value);
-        for (const line of chunk.split('\n')) {
-          if (line.startsWith('data: ')) {
-            try {
-              const parsed = JSON.parse(line.slice(6));
-              if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
-                full += parsed.delta.text;
-                const el = document.getElementById(loadId);
-                if (el) el.innerHTML = escHtml(full) + '<span class="ai-cursor"></span>';
-                msgs.scrollTop = msgs.scrollHeight;
-              }
-            } catch(e) {}
-          }
-        }
-      }
-
+      if (!res.ok) throw new Error('API error ' + res.status);
+      const respData = await res.json();
+      const full = respData.content?.[0]?.text || 'No response';
       const el = document.getElementById(loadId);
       if (el) el.textContent = full;
       state.aiMessages.push({ role: 'assistant', content: full });
 
     } catch(err) {
       const el = document.getElementById(loadId);
-      if (el) el.textContent = 'Error: ' + (err.message || 'Failed to get response. Check your API key.');
+      if (el) el.textContent = 'Error: ' + (err.message || 'Failed to get response. Check your Gemini API key.');
     }
 
     state.aiLoading = false;
@@ -1361,10 +1321,11 @@ const Portal = (() => {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'x-api-key': state.apiKey
+          'x-api-key': state.apiKey,
+          'anthropic-version': '2023-06-01'
         },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-3-5-sonnet-20241022',
           max_tokens: 600,
           messages: [{
             role: 'user',
@@ -1372,15 +1333,12 @@ const Portal = (() => {
           }]
         })
       });
-      if (!res.ok) {
-        if (res.status === 401) throw new Error('Invalid API key');
-        throw new Error('API error ' + res.status);
-      }
+      if (!res.ok) throw new Error('API error ' + res.status);
       const data = await res.json();
       const text = data.content?.[0]?.text || 'Unable to get explanation.';
       document.getElementById('fcAnswer').textContent = q.answer + '\n\n💡 ' + text;
     } catch(e) {
-      alert('AI Error: ' + (e.message || 'Check your API key'));
+      alert('AI Error: ' + (e.message || 'Check your Anthropic API key.'));
     }
     btn.disabled = false; btn.innerHTML = '✦ AI Explain';
   }
