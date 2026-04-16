@@ -1,0 +1,1437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DB Study Portal · CE/IS 279 · UMaT</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗄</text></svg>" />
+  <style>
+    /* ── RESET ─────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    :root {
+      --bg:         #060610;
+      --bg1:        #0c0c1e;
+      --bg2:        #111128;
+      --bg3:        #181830;
+      --surface:    #1a1a35;
+      --surface2:   #22223d;
+      --border:     rgba(255,255,255,0.06);
+      --border2:    rgba(255,255,255,0.1);
+      --glow:       rgba(99,102,241,0.3);
+      
+      --ink:        #f0f0ff;
+      --ink2:       #a0a0c0;
+      --ink3:       #606080;
+      
+      --indigo:     #6366f1;
+      --indigo-l:   #818cf8;
+      --violet:     #8b5cf6;
+      --cyan:       #06b6d4;
+      --cyan-l:     #67e8f9;
+      --emerald:    #10b981;
+      --emerald-l:  #6ee7b7;
+      --amber:      #f59e0b;
+      --amber-l:    #fcd34d;
+      --rose:       #f43f5e;
+      --rose-l:     #fda4af;
+      --sky:        #0ea5e9;
+      --sky-l:      #7dd3fc;
+      
+      --r-sm: 6px; --r-md: 10px; --r-lg: 16px; --r-xl: 22px;
+      --ease: cubic-bezier(0.4,0,0.2,1);
+      --shadow: 0 4px 30px rgba(0,0,0,0.5);
+      --shadow-glow: 0 0 40px rgba(99,102,241,0.2);
+    }
+
+    html { scroll-behavior: smooth; }
+    
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+    
+    /* ── ANIMATED BACKGROUND ─────────────────────────────────── */
+    .bg-fx {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      overflow: hidden;
+    }
+    .bg-orb {
+      position: absolute; border-radius: 50%;
+      filter: blur(80px); opacity: 0.12;
+      animation: orb-drift 20s ease-in-out infinite alternate;
+    }
+    .bg-orb:nth-child(1) { width: 600px; height: 600px; background: var(--indigo); top: -100px; left: -100px; animation-delay: 0s; }
+    .bg-orb:nth-child(2) { width: 400px; height: 400px; background: var(--violet); bottom: 10%; right: -100px; animation-delay: -7s; }
+    .bg-orb:nth-child(3) { width: 300px; height: 300px; background: var(--cyan); bottom: 30%; left: 30%; animation-delay: -14s; }
+    .bg-grid {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px);
+      background-size: 48px 48px;
+    }
+    @keyframes orb-drift { 0%{transform:translate(0,0) scale(1);} 100%{transform:translate(40px,30px) scale(1.15);} }
+
+    /* ── LAYOUT ─────────────────────────────────────────────── */
+    .app { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 0 20px 80px; }
+
+    /* ── TOPBAR ─────────────────────────────────────────────── */
+    .topbar {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(6,6,16,0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border2);
+      padding: 14px 24px;
+      display: flex; align-items: center; gap: 16px;
+      margin: 0 -20px;
+    }
+    .topbar-logo { display: flex; align-items: center; gap: 10px; }
+    .topbar-logo .logo-icon {
+      width: 36px; height: 36px; border-radius: 8px;
+      background: linear-gradient(135deg, var(--indigo), var(--violet));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
+    }
+    .topbar-logo-text { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; line-height: 1.2; }
+    .topbar-logo-sub { font-size: 11px; color: var(--ink3); font-family: 'DM Sans', sans-serif; font-weight: 400; }
+    .topbar-spacer { flex: 1; }
+    .topbar-actions { display: flex; align-items: center; gap: 8px; }
+    
+    /* ── HERO ────────────────────────────────────────────────── */
+    .hero {
+      padding: 60px 0 48px;
+      text-align: center;
+      position: relative;
+    }
+    .hero-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(99,102,241,0.1);
+      border: 1px solid rgba(99,102,241,0.25);
+      padding: 5px 14px 5px 10px; border-radius: 100px;
+      font-size: 12px; color: var(--indigo-l); margin-bottom: 20px;
+      font-weight: 500; letter-spacing: 0.5px;
+    }
+    .hero-chip-dot { width: 6px; height: 6px; background: var(--indigo); border-radius: 50%; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+    
+    .hero h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(36px, 6vw, 72px);
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -2px;
+      margin-bottom: 18px;
+      background: linear-gradient(135deg, #fff 0%, var(--indigo-l) 60%, var(--cyan) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-sub {
+      font-size: 16px; color: var(--ink2); max-width: 520px; margin: 0 auto 32px;
+      line-height: 1.7;
+    }
+    .hero-tags { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 40px; }
+    .hero-tag {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: var(--bg2); border: 1px solid var(--border);
+      padding: 5px 12px; border-radius: 6px; font-size: 12px; color: var(--ink2);
+      transition: all 0.2s;
+    }
+    .hero-tag:hover { border-color: var(--border2); color: var(--ink); }
+    .hero-tag-dot { width: 5px; height: 5px; border-radius: 50%; }
+
+    /* ── DASHBOARD STATS ─────────────────────────────────────── */
+    .dashboard {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;
+      margin-bottom: 24px;
+    }
+    @media(max-width:720px) { .dashboard { grid-template-columns: repeat(2,1fr); } }
+    
+    .stat-card {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--r-lg); padding: 18px 20px;
+      position: relative; overflow: hidden;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .stat-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+    .stat-card-accent {
+      position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      border-radius: var(--r-lg) var(--r-lg) 0 0;
+    }
+    .stat-label { font-size: 11px; color: var(--ink3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; font-weight: 600; }
+    .stat-value { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 700; line-height: 1; }
+    .stat-detail { font-size: 11px; color: var(--ink3); margin-top: 4px; }
+
+    /* ── PROGRESS ────────────────────────────────────────────── */
+    .progress-widget {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--r-lg); padding: 20px 24px;
+      margin-bottom: 20px;
+      display: flex; align-items: center; gap: 20px;
+    }
+    .progress-label { font-size: 13px; color: var(--ink2); white-space: nowrap; font-weight: 500; }
+    .progress-track {
+      flex: 1; height: 8px; background: var(--bg3);
+      border-radius: 100px; overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%; border-radius: 100px;
+      background: linear-gradient(90deg, var(--indigo), var(--cyan));
+      transition: width 0.6s var(--ease);
+      position: relative; overflow: hidden;
+    }
+    .progress-fill::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.3) 50%, transparent 100%);
+      animation: shimmer 2s infinite;
+    }
+    @keyframes shimmer { 0%{transform:translateX(-100%);} 100%{transform:translateX(200%);} }
+    .progress-pct { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; white-space: nowrap; }
+
+    /* ── TOOLBAR ─────────────────────────────────────────────── */
+    .toolbar {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 16px; flex-wrap: wrap;
+    }
+    .search-wrap {
+      flex: 1; min-width: 200px;
+      position: relative;
+    }
+    .search-icon-el {
+      position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+      color: var(--ink3); pointer-events: none;
+    }
+    .search-input {
+      width: 100%; padding: 10px 14px 10px 40px;
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--r-md); color: var(--ink); font-family: 'DM Sans', sans-serif;
+      font-size: 14px; outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .search-input:focus { border-color: var(--indigo); box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
+    .search-input::placeholder { color: var(--ink3); }
+
+    /* ── BTNS ────────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 9px 16px; border-radius: var(--r-md);
+      font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+      cursor: pointer; border: none; transition: all 0.2s var(--ease);
+      text-decoration: none; white-space: nowrap;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-ghost { background: var(--bg2); color: var(--ink2); border: 1px solid var(--border); }
+    .btn-ghost:hover { background: var(--bg3); color: var(--ink); border-color: var(--border2); }
+    .btn-primary { background: var(--indigo); color: #fff; }
+    .btn-primary:hover { background: var(--indigo-l); filter: brightness(1.05); }
+    .btn-danger { background: rgba(244,63,94,0.1); color: var(--rose); border: 1px solid rgba(244,63,94,0.2); }
+    .btn-danger:hover { background: rgba(244,63,94,0.2); }
+    .btn-ai {
+      background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15));
+      color: var(--indigo-l); border: 1px solid rgba(99,102,241,0.3);
+    }
+    .btn-ai:hover { background: linear-gradient(135deg, rgba(99,102,241,0.25), rgba(139,92,246,0.25)); border-color: var(--indigo); }
+    .btn-show { background: rgba(6,182,212,0.1); color: var(--cyan); border: 1px solid rgba(6,182,212,0.2); }
+    .btn-show:hover { background: rgba(6,182,212,0.2); }
+    .btn-save { background: rgba(16,185,129,0.1); color: var(--emerald); border: 1px solid rgba(16,185,129,0.2); }
+    .btn-save:hover { background: rgba(16,185,129,0.2); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
+    .btn-sm { padding: 7px 12px; font-size: 12px; }
+    .btn-xs { padding: 5px 10px; font-size: 11px; }
+    
+    /* ── TABS ────────────────────────────────────────────────── */
+    .tabs-bar {
+      display: flex; gap: 4px; padding: 6px;
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--r-lg); margin-bottom: 20px;
+      overflow-x: auto; scrollbar-width: none; flex-wrap: wrap;
+    }
+    .tabs-bar::-webkit-scrollbar { display: none; }
+    .tab-btn {
+      display: flex; align-items: center; gap: 7px;
+      padding: 8px 14px; border-radius: var(--r-md);
+      font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+      color: var(--ink2); background: transparent; border: none; cursor: pointer;
+      transition: all 0.2s; white-space: nowrap;
+    }
+    .tab-btn:hover { background: var(--bg3); color: var(--ink); }
+    .tab-btn.active {
+      background: var(--surface); color: var(--ink);
+      box-shadow: 0 1px 8px rgba(0,0,0,0.3);
+    }
+    .tab-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+    .tab-count {
+      background: var(--bg3); border-radius: 100px;
+      padding: 1px 7px; font-size: 10px; color: var(--ink3);
+    }
+    .tab-btn.active .tab-count { background: rgba(255,255,255,0.1); color: var(--ink2); }
+
+    /* ── SECTION HEADER ──────────────────────────────────────── */
+    .section-header {
+      display: flex; align-items: center; gap: 16px;
+      padding: 24px 28px; margin-bottom: 20px;
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--r-xl);
+      position: relative; overflow: hidden;
+    }
+    .section-header::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--section-color, var(--indigo)), transparent);
+    }
+    .section-icon-wrap {
+      width: 52px; height: 52px; border-radius: var(--r-md);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; flex-shrink: 0;
+      border: 1px solid var(--border2);
+    }
+    .section-header-info { flex: 1; }
+    .section-header-info h2 {
+      font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .section-header-info p { font-size: 13px; color: var(--ink2); }
+    .section-badge {
+      background: var(--bg3); border: 1px solid var(--border);
+      padding: 6px 14px; border-radius: 100px;
+      font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
+    }
+    .section-progress { width: 80px; }
+    .section-progress-mini {
+      height: 4px; background: var(--bg3); border-radius: 100px; overflow: hidden; margin-top: 4px;
+    }
+    .section-progress-fill {
+      height: 100%; border-radius: 100px;
+      background: linear-gradient(90deg, var(--indigo), var(--cyan));
+      transition: width 0.5s;
+    }
+    .section-progress-label { font-size: 10px; color: var(--ink3); text-align: right; margin-top: 2px; }
+
+    /* ── QUESTION GRID ───────────────────────────────────────── */
+    .questions-grid { display: flex; flex-direction: column; gap: 10px; }
+
+    /* ── Q CARD ─────────────────────────────────────────────── */
+    .q-card {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--r-lg); overflow: hidden;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .q-card:hover { border-color: var(--border2); }
+    .q-card.open { border-color: rgba(99,102,241,0.25); box-shadow: 0 0 0 1px rgba(99,102,241,0.08), var(--shadow); }
+    .q-card.answered { border-left: 3px solid var(--emerald); }
+    .q-card.answered.open { border-left: 3px solid var(--emerald); border-color: rgba(16,185,129,0.25); }
+
+    .q-header {
+      display: flex; align-items: center; gap: 14px;
+      padding: 16px 20px; cursor: pointer;
+      user-select: none;
+      transition: background 0.15s;
+    }
+    .q-header:hover { background: rgba(255,255,255,0.02); }
+
+    .q-num {
+      width: 34px; height: 34px; border-radius: var(--r-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700;
+      flex-shrink: 0;
+    }
+    .q-title { flex: 1; font-size: 14px; font-weight: 500; line-height: 1.5; }
+    .q-meta { display: flex; align-items: center; gap: 8px; }
+    .q-type-badge {
+      font-size: 10px; font-weight: 600; letter-spacing: 0.8px;
+      padding: 3px 8px; border-radius: 4px; text-transform: uppercase;
+    }
+    .badge-theory { background: rgba(99,102,241,0.12); color: var(--indigo-l); }
+    .badge-code { background: rgba(6,182,212,0.12); color: var(--cyan); }
+    .badge-mcq { background: rgba(245,158,11,0.12); color: var(--amber); }
+    .q-check { color: var(--emerald); font-size: 14px; }
+    .q-chevron {
+      width: 18px; height: 18px; color: var(--ink3); flex-shrink: 0;
+      transition: transform 0.25s var(--ease);
+    }
+    .q-card.open .q-chevron { transform: rotate(180deg); }
+
+    /* ── Q BODY ─────────────────────────────────────────────── */
+    .q-body {
+      max-height: 0; overflow: hidden;
+      transition: max-height 0.35s var(--ease), padding 0.2s;
+    }
+    .q-card.open .q-body { max-height: 2000px; }
+    .q-body-inner { padding: 0 20px 20px; border-top: 1px solid var(--border); padding-top: 18px; }
+
+    /* ── ANSWER AREA ─────────────────────────────────────────── */
+    .answer-label { font-size: 11px; color: var(--ink3); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; margin-bottom: 8px; }
+    .user-textarea {
+      width: 100%; padding: 12px 14px;
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: var(--r-md); color: var(--ink);
+      font-family: 'DM Sans', sans-serif; font-size: 14px;
+      resize: vertical; min-height: 80px; outline: none;
+      transition: border-color 0.2s;
+      line-height: 1.6;
+    }
+    .user-textarea:focus { border-color: var(--indigo); }
+    .user-textarea::placeholder { color: var(--ink3); }
+    .action-row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+
+    /* ── ANSWER BOX ─────────────────────────────────────────── */
+    .answer-box {
+      margin-top: 14px; border-radius: var(--r-md); overflow: hidden;
+      border: 1px solid var(--border2); animation: slide-in 0.2s var(--ease);
+    }
+    @keyframes slide-in { from{opacity:0;transform:translateY(-6px);} to{opacity:1;transform:translateY(0);} }
+    .answer-box-header {
+      padding: 10px 16px; font-size: 11px; font-weight: 600; letter-spacing: 0.8px;
+      text-transform: uppercase; display: flex; align-items: center; gap: 6px;
+    }
+    .answer-box-body { padding: 16px; background: var(--bg1); }
+    .answer-box.correct .answer-box-header { background: rgba(16,185,129,0.1); color: var(--emerald); border-bottom: 1px solid rgba(16,185,129,0.2); }
+    .answer-box.ai-box .answer-box-header { background: linear-gradient(90deg, rgba(99,102,241,0.1), rgba(139,92,246,0.1)); color: var(--indigo-l); border-bottom: 1px solid rgba(99,102,241,0.15); }
+    
+    .answer-text { font-size: 14px; color: var(--ink2); line-height: 1.75; white-space: pre-wrap; }
+    .answer-text strong { color: var(--ink); font-weight: 600; }
+    
+    /* ── CODE BLOCK ─────────────────────────────────────────── */
+    .code-wrap { position: relative; }
+    .code-lang-badge {
+      position: absolute; top: 10px; right: 12px;
+      font-size: 10px; font-weight: 600; letter-spacing: 1px;
+      color: var(--ink3); text-transform: uppercase;
+    }
+    .code-copy-btn {
+      position: absolute; top: 8px; right: 50px;
+      padding: 4px 8px; font-size: 11px; border-radius: 4px;
+      background: var(--bg3); border: 1px solid var(--border);
+      color: var(--ink2); cursor: pointer; transition: all 0.2s;
+    }
+    .code-copy-btn:hover { background: var(--bg2); color: var(--ink); }
+    pre {
+      background: var(--bg); border-radius: var(--r-md);
+      padding: 16px 16px 16px 16px; overflow-x: auto;
+      border: 1px solid var(--border);
+    }
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px; line-height: 1.7;
+      color: var(--cyan-l);
+    }
+    
+    /* ── MCQ ─────────────────────────────────────────────────── */
+    .mcq-grid { display: flex; flex-direction: column; gap: 8px; }
+    .mcq-option {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 12px 16px; border-radius: var(--r-md);
+      background: var(--bg3); border: 1px solid var(--border);
+      color: var(--ink); cursor: pointer; text-align: left;
+      font-family: 'DM Sans', sans-serif; font-size: 14px;
+      transition: all 0.2s;
+    }
+    .mcq-option:hover:not([disabled]) { background: var(--surface); border-color: var(--border2); }
+    .mcq-letter {
+      width: 24px; height: 24px; border-radius: 6px;
+      background: var(--surface2); display: flex; align-items: center; justify-content: center;
+      font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700;
+      flex-shrink: 0; margin-top: 1px;
+    }
+    .mcq-option.correct { background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.4); }
+    .mcq-option.correct .mcq-letter { background: var(--emerald); color: #fff; }
+    .mcq-option.wrong { background: rgba(244,63,94,0.08); border-color: rgba(244,63,94,0.3); }
+    .mcq-option.wrong .mcq-letter { background: var(--rose); color: #fff; }
+    .mcq-option.show-correct { background: rgba(16,185,129,0.06); border-color: rgba(16,185,129,0.2); }
+    .mcq-option.show-correct .mcq-letter { background: rgba(16,185,129,0.2); color: var(--emerald); }
+    .mcq-explanation {
+      margin-top: 12px; padding: 12px 16px;
+      background: rgba(245,158,11,0.06); border: 1px solid rgba(245,158,11,0.2);
+      border-radius: var(--r-md); font-size: 13px; color: var(--ink2); line-height: 1.6;
+    }
+    
+    /* ── AI TYPING ───────────────────────────────────────────── */
+    .ai-cursor { display: inline-block; width: 2px; height: 14px; background: var(--indigo-l); animation: blink 1s infinite; vertical-align: middle; }
+    @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0;} }
+    
+    /* ── AI TUTOR PANEL ──────────────────────────────────────── */
+    #ai-panel {
+      position: fixed; right: 20px; bottom: 20px; width: 380px; z-index: 200;
+      background: var(--bg1); border: 1px solid rgba(99,102,241,0.3);
+      border-radius: var(--r-xl); box-shadow: 0 20px 60px rgba(0,0,0,0.6), var(--shadow-glow);
+      display: none; flex-direction: column; overflow: hidden;
+      animation: panel-in 0.3s var(--ease);
+      max-height: 70vh;
+    }
+    @keyframes panel-in { from{opacity:0;transform:translateY(20px) scale(0.97);} to{opacity:1;transform:none;} }
+    #ai-panel.open { display: flex; }
+    .ai-panel-header {
+      padding: 16px 18px; background: linear-gradient(135deg, rgba(99,102,241,0.12), rgba(139,92,246,0.12));
+      border-bottom: 1px solid rgba(99,102,241,0.2);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .ai-avatar {
+      width: 34px; height: 34px; border-radius: 10px; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--indigo), var(--violet));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+    }
+    .ai-panel-title { flex: 1; }
+    .ai-panel-title strong { font-size: 14px; font-weight: 600; display: block; }
+    .ai-panel-title span { font-size: 11px; color: var(--ink3); }
+    .ai-close { background: none; border: none; color: var(--ink3); cursor: pointer; padding: 4px; border-radius: 6px; font-size: 18px; transition: color 0.2s; }
+    .ai-close:hover { color: var(--ink); }
+    .ai-messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+    .ai-msg {
+      padding: 12px 14px; border-radius: var(--r-md); font-size: 13px; line-height: 1.65;
+      animation: msg-in 0.2s var(--ease);
+    }
+    @keyframes msg-in { from{opacity:0;transform:translateY(6px);} to{opacity:1;transform:none;} }
+    .ai-msg.user { background: rgba(99,102,241,0.15); color: var(--ink); margin-left: 20px; }
+    .ai-msg.assistant { background: var(--bg3); color: var(--ink2); margin-right: 20px; }
+    .ai-msg.assistant pre { background: var(--bg2); margin-top: 8px; }
+    .ai-input-row {
+      padding: 12px; border-top: 1px solid var(--border);
+      display: flex; gap: 8px; align-items: flex-end;
+    }
+    .ai-input {
+      flex: 1; padding: 10px 14px;
+      background: var(--bg3); border: 1px solid var(--border);
+      border-radius: var(--r-md); color: var(--ink);
+      font-family: 'DM Sans', sans-serif; font-size: 13px; outline: none;
+      resize: none; min-height: 40px; max-height: 120px;
+      transition: border-color 0.2s;
+    }
+    .ai-input:focus { border-color: var(--indigo); }
+    .ai-send {
+      width: 38px; height: 38px; border-radius: var(--r-md);
+      background: var(--indigo); color: #fff; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; transition: all 0.2s; flex-shrink: 0;
+    }
+    .ai-send:hover { background: var(--indigo-l); }
+    .ai-send:disabled { opacity: 0.4; cursor: not-allowed; }
+    .ai-fab {
+      position: fixed; right: 24px; bottom: 24px; z-index: 199;
+      width: 52px; height: 52px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--indigo), var(--violet));
+      color: #fff; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; box-shadow: 0 6px 30px rgba(99,102,241,0.5);
+      transition: all 0.25s; animation: fab-bounce 0.5s 1s both;
+    }
+    @keyframes fab-bounce { from{transform:scale(0);} 70%{transform:scale(1.1);} to{transform:scale(1);} }
+    .ai-fab:hover { transform: scale(1.08); box-shadow: 0 8px 40px rgba(99,102,241,0.6); }
+    .ai-fab-badge {
+      position: absolute; top: -2px; right: -2px;
+      width: 16px; height: 16px; background: var(--rose);
+      border-radius: 50%; font-size: 9px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      border: 2px solid var(--bg);
+    }
+
+    /* ── FLASHCARD MODE ──────────────────────────────────────── */
+    #flashcard-overlay {
+      position: fixed; inset: 0; z-index: 300;
+      background: rgba(6,6,16,0.97); backdrop-filter: blur(20px);
+      display: none; flex-direction: column; align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    #flashcard-overlay.open { display: flex; }
+    .fc-card {
+      width: 100%; max-width: 680px;
+      background: var(--bg2); border: 1px solid var(--border2);
+      border-radius: var(--r-xl); padding: 40px;
+      text-align: center; position: relative;
+      box-shadow: var(--shadow);
+    }
+    .fc-section-tag {
+      display: inline-block; padding: 4px 12px; border-radius: 100px;
+      font-size: 11px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+    .fc-question { font-size: 20px; font-weight: 500; line-height: 1.5; margin-bottom: 24px; }
+    .fc-answer {
+      background: var(--bg3); border-radius: var(--r-md); padding: 20px;
+      font-size: 14px; color: var(--ink2); line-height: 1.7;
+      white-space: pre-wrap; text-align: left;
+      display: none;
+    }
+    .fc-answer.visible { display: block; }
+    .fc-controls { display: flex; gap: 10px; justify-content: center; margin-top: 24px; flex-wrap: wrap; }
+    .fc-nav { display: flex; align-items: center; gap: 16px; margin-top: 20px; }
+    .fc-counter { font-family: 'Syne', sans-serif; font-size: 14px; color: var(--ink2); }
+    .fc-progress { width: 200px; height: 4px; background: var(--bg3); border-radius: 100px; overflow: hidden; }
+    .fc-progress-fill { height: 100%; border-radius: 100px; background: linear-gradient(90deg, var(--indigo), var(--cyan)); transition: width 0.3s; }
+
+    /* ── SPINNER ─────────────────────────────────────────────── */
+    .spinner {
+      width: 14px; height: 14px; border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.2);
+      border-top-color: currentColor;
+      animation: spin 0.8s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to{transform:rotate(360deg);} }
+
+    /* ── TOAST ───────────────────────────────────────────────── */
+    .toast {
+      position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+      background: var(--surface2); border: 1px solid var(--border2);
+      color: var(--ink); padding: 10px 20px; border-radius: 100px;
+      font-size: 13px; font-weight: 500;
+      box-shadow: var(--shadow); z-index: 500;
+      animation: toast-in 0.3s var(--ease), toast-out 0.3s var(--ease) 2s both;
+    }
+    @keyframes toast-in { from{opacity:0;transform:translateX(-50%) translateY(10px);} to{opacity:1;transform:translateX(-50%) translateY(0);} }
+    @keyframes toast-out { to{opacity:0;transform:translateX(-50%) translateY(10px);} }
+
+    /* ── EMPTY STATE ─────────────────────────────────────────── */
+    .empty-state { text-align: center; padding: 60px 20px; color: var(--ink3); }
+    .empty-state h3 { font-size: 18px; margin-bottom: 8px; color: var(--ink2); }
+
+    /* ── FOOTER ─────────────────────────────────────────────── */
+    .footer {
+      text-align: center; padding: 40px 20px 20px;
+      color: var(--ink3); font-size: 12px;
+      border-top: 1px solid var(--border); margin-top: 60px;
+    }
+    kbd {
+      background: var(--bg3); border: 1px solid var(--border2);
+      border-radius: 4px; padding: 2px 6px; font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* ── SCROLLBAR ───────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--bg3); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--indigo); }
+    
+    /* ── VIEW TOGGLE ──────────────────────────────────────────── */
+    .view-toggle { display: flex; gap: 4px; }
+    .view-btn {
+      width: 34px; height: 34px; border-radius: var(--r-sm);
+      background: var(--bg2); border: 1px solid var(--border);
+      color: var(--ink3); cursor: pointer; transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center; font-size: 15px;
+    }
+    .view-btn.active { background: var(--indigo); border-color: var(--indigo); color: #fff; }
+    
+    /* ── FILTER ROW ────────────────────────────────────────────── */
+    .filter-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+    .filter-chip {
+      padding: 5px 12px; border-radius: 100px; font-size: 12px; font-weight: 500;
+      background: var(--bg2); border: 1px solid var(--border); color: var(--ink2);
+      cursor: pointer; transition: all 0.2s;
+    }
+    .filter-chip:hover { border-color: var(--border2); color: var(--ink); }
+    .filter-chip.active { background: rgba(99,102,241,0.15); border-color: rgba(99,102,241,0.4); color: var(--indigo-l); }
+    
+    /* ── RESPONSIVE ────────────────────────────────────────────── */
+    @media(max-width:640px) {
+      .hero h1 { font-size: 36px; letter-spacing: -1px; }
+      #ai-panel { width: calc(100vw - 40px); right: 20px; }
+      .section-header { flex-wrap: wrap; }
+      .topbar-actions .btn span { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="bg-fx">
+  <div class="bg-orb"></div>
+  <div class="bg-orb"></div>
+  <div class="bg-orb"></div>
+  <div class="bg-grid"></div>
+</div>
+
+<!-- ── TOPBAR ──────────────────────────────────────────────── -->
+<div class="topbar">
+  <div class="topbar-logo">
+    <div class="logo-icon">🗄</div>
+    <div>
+      <div class="topbar-logo-text">DB Study Portal</div>
+      <div class="topbar-logo-sub">CE/IS 279 · UMaT · Dr. Eric Affum</div>
+    </div>
+  </div>
+  <div class="topbar-spacer"></div>
+  <div class="topbar-actions">
+    <button class="btn btn-ghost btn-sm" onclick="Portal.openFlashcards()">
+      <span>⚡</span><span>Flashcards</span>
+    </button>
+    <button class="btn btn-ghost btn-sm" onclick="Portal.resetProgress()">
+      <span>🔄</span><span>Reset</span>
+    </button>
+  </div>
+</div>
+
+<div class="app">
+  <!-- ── HERO ──────────────────────────────────────────────── -->
+  <header class="hero">
+    <div class="hero-chip"><div class="hero-chip-dot"></div>Step Changer's Studyhub</div>
+    <h1>Advanced Database<br>Study Portal</h1>
+    <p class="hero-sub">Ace CE/IS 279 with AI-powered explanations, instant feedback, and smart revision tools</p>
+    <div class="hero-tags">
+      <span class="hero-tag"><span class="hero-tag-dot" style="background:#6366f1"></span>Stored Procedures & Triggers</span>
+      <span class="hero-tag"><span class="hero-tag-dot" style="background:#06b6d4"></span>Database Security</span>
+      <span class="hero-tag"><span class="hero-tag-dot" style="background:#10b981"></span>MongoDB Queries</span>
+      <span class="hero-tag"><span class="hero-tag-dot" style="background:#f59e0b"></span>NoSQL & CAP Theorem</span>
+      <span class="hero-tag"><span class="hero-tag-dot" style="background:#8b5cf6"></span>Relational Algebra</span>
+    </div>
+  </header>
+
+  <!-- ── DASHBOARD ──────────────────────────────────────────── -->
+  <div class="dashboard">
+    <div class="stat-card">
+      <div class="stat-card-accent" style="background:linear-gradient(90deg,#6366f1,#8b5cf6)"></div>
+      <div class="stat-label">Total Questions</div>
+      <div class="stat-value" id="stat-total">—</div>
+      <div class="stat-detail">Across all sections</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-accent" style="background:linear-gradient(90deg,#10b981,#06b6d4)"></div>
+      <div class="stat-label">Completed</div>
+      <div class="stat-value" style="color:var(--emerald)" id="stat-answered">0</div>
+      <div class="stat-detail">Questions answered</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-accent" style="background:linear-gradient(90deg,#f59e0b,#f43f5e)"></div>
+      <div class="stat-label">Remaining</div>
+      <div class="stat-value" style="color:var(--amber)" id="stat-remaining">—</div>
+      <div class="stat-detail">Still to review</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-card-accent" style="background:linear-gradient(90deg,#8b5cf6,#06b6d4)"></div>
+      <div class="stat-label">Score</div>
+      <div class="stat-value" style="color:var(--indigo-l)" id="stat-score">0%</div>
+      <div class="stat-detail">MCQ accuracy</div>
+    </div>
+  </div>
+
+  <!-- ── PROGRESS ──────────────────────────────────────────── -->
+  <div class="progress-widget">
+    <span class="progress-label">Study Progress</span>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill" style="width:0%"></div>
+    </div>
+    <span class="progress-pct" id="progressLabel">0%</span>
+  </div>
+
+  <!-- ── TOOLBAR ────────────────────────────────────────────── -->
+  <div class="toolbar">
+    <div class="search-wrap">
+      <svg class="search-icon-el" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input class="search-input" id="searchInput" type="text" placeholder="Search questions, answers…" autocomplete="off" />
+    </div>
+  </div>
+
+  <!-- ── FILTER ROW ─────────────────────────────────────────── -->
+  <div class="filter-row" id="filterRow">
+    <span class="filter-chip active" data-filter="all" onclick="Portal.setFilter('all',this)">All Types</span>
+    <span class="filter-chip" data-filter="theory" onclick="Portal.setFilter('theory',this)">Theory</span>
+    <span class="filter-chip" data-filter="code" onclick="Portal.setFilter('code',this)">Code</span>
+    <span class="filter-chip" data-filter="mcq" onclick="Portal.setFilter('mcq',this)">MCQ</span>
+    <span class="filter-chip" data-filter="unanswered" onclick="Portal.setFilter('unanswered',this)">Unanswered</span>
+  </div>
+
+  <!-- ── TABS ──────────────────────────────────────────────── -->
+  <div class="tabs-bar" id="tabs"></div>
+
+  <!-- ── MAIN ──────────────────────────────────────────────── -->
+  <main id="mainContent"></main>
+
+  <!-- ── FOOTER ────────────────────────────────────────────── -->
+  <footer class="footer">
+    Advanced Database Systems · CE/IS 279 · University of Mines and Technology, Tarkwa &nbsp;·&nbsp;
+    Press <kbd>1</kbd>–<kbd>5</kbd> to switch sections &nbsp;·&nbsp;
+    <kbd>F</kbd> for Flashcards &nbsp;·&nbsp; <kbd>A</kbd> for AI Tutor
+  </footer>
+</div>
+
+<!-- ── AI TUTOR PANEL ─────────────────────────────────────── -->
+<div id="ai-panel">
+  <div class="ai-panel-header">
+    <div class="ai-avatar">✦</div>
+    <div class="ai-panel-title">
+      <strong>AI Database Tutor</strong>
+      <span>CE/IS 279 · Dr. Affum's notes</span>
+    </div>
+    <button class="ai-close" onclick="Portal.toggleAiPanel()">✕</button>
+  </div>
+  <div class="ai-messages" id="aiMessages">
+    <div class="ai-msg assistant">Hi! I'm your AI tutor for Advanced Database Systems (CE/IS 279). Ask me anything about stored procedures, triggers, MongoDB, NoSQL, relational algebra, or any topic from Dr. Affum's notes. 🎓</div>
+  </div>
+  <div class="ai-input-row">
+    <textarea class="ai-input" id="aiChatInput" rows="1" placeholder="Ask a question…" onkeydown="Portal.aiChatKeydown(event)"></textarea>
+    <button class="ai-send" id="aiSendBtn" onclick="Portal.sendAiChat()">➤</button>
+  </div>
+</div>
+
+<button class="ai-fab" id="aiFab" onclick="Portal.toggleAiPanel()" title="AI Tutor">
+  ✦
+  <div class="ai-fab-badge" id="aiBadge" style="display:none">!</div>
+</button>
+
+<!-- ── FLASHCARD OVERLAY ─────────────────────────────────── -->
+<div id="flashcard-overlay">
+  <div style="position:absolute;top:20px;right:20px;">
+    <button class="btn btn-ghost" onclick="Portal.closeFlashcards()">✕ Close</button>
+  </div>
+  <div class="fc-card" id="fcCard">
+    <div class="fc-section-tag" id="fcSectionTag"></div>
+    <div class="fc-question" id="fcQuestion"></div>
+    <div class="fc-answer" id="fcAnswer"></div>
+    <div class="fc-controls">
+      <button class="btn btn-ghost" id="fcRevealBtn" onclick="Portal.fcReveal()">👁 Reveal Answer</button>
+      <button class="btn btn-ghost" id="fcAiBtn" onclick="Portal.fcAiExplain()" style="display:none">✦ AI Explain</button>
+      <button class="btn btn-save" onclick="Portal.fcMark(true)" id="fcGotIt" style="display:none">✓ Got it</button>
+      <button class="btn btn-danger" onclick="Portal.fcMark(false)" id="fcMissed" style="display:none">✗ Review</button>
+    </div>
+    <div class="fc-nav">
+      <button class="btn btn-ghost btn-sm" onclick="Portal.fcPrev()">← Prev</button>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;">
+        <div class="fc-counter" id="fcCounter">1 / 1</div>
+        <div class="fc-progress"><div class="fc-progress-fill" id="fcProgressFill"></div></div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="Portal.fcNext()">Next →</button>
+    </div>
+  </div>
+</div>
+
+<!-- DATA -->
+<script src="js/questions.js"></script>
+
+<!-- APP -->
+<script>
+const Portal = (() => {
+  let state = {
+    activeSection: null,
+    openCards: new Set(),
+    answeredCards: new Set(),
+    userAnswers: {},
+    mcqSelected: {},
+    mcqCorrect: 0,
+    mcqTotal: 0,
+    searchQuery: '',
+    filterType: 'all',
+    aiMessages: [],
+    aiLoading: false,
+    fcIndex: 0,
+    fcList: [],
+    fcRevealed: false
+  };
+
+  // ── INIT ────────────────────────────────────────────────────
+  function init() {
+    loadState();
+    renderTabs();
+    renderStats();
+    setActiveSection(DB_STUDY_DATA.sections[0].id);
+    bindSearch();
+    bindKeyboard();
+    updateProgress();
+    buildFcList();
+  }
+
+  // ── PERSISTENCE ─────────────────────────────────────────────
+  function saveState() {
+    try {
+      localStorage.setItem('dbportal_v2', JSON.stringify({
+        answeredCards: [...state.answeredCards],
+        userAnswers: state.userAnswers,
+        mcqSelected: state.mcqSelected,
+        mcqCorrect: state.mcqCorrect,
+        mcqTotal: state.mcqTotal
+      }));
+    } catch(e) {}
+  }
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem('dbportal_v2');
+      if (!raw) return;
+      const s = JSON.parse(raw);
+      state.answeredCards = new Set(s.answeredCards || []);
+      state.userAnswers = s.userAnswers || {};
+      state.mcqSelected = s.mcqSelected || {};
+      state.mcqCorrect = s.mcqCorrect || 0;
+      state.mcqTotal = s.mcqTotal || 0;
+    } catch(e) {}
+  }
+
+  // ── TABS ────────────────────────────────────────────────────
+  function renderTabs() {
+    const tabs = document.getElementById('tabs');
+    tabs.innerHTML = DB_STUDY_DATA.sections.map(s => `
+      <button class="tab-btn" data-id="${s.id}" onclick="Portal.setActiveSection('${s.id}')">
+        <span class="tab-dot" style="background:${s.color}"></span>
+        ${s.icon} ${s.title.split('—')[0].trim()}
+        <span class="tab-count">${s.questions.length}</span>
+      </button>
+    `).join('');
+  }
+
+  // ── STATS ───────────────────────────────────────────────────
+  function renderStats() {
+    const total = DB_STUDY_DATA.sections.reduce((s, sec) => s + sec.questions.length, 0);
+    const answered = state.answeredCards.size;
+    document.getElementById('stat-total').textContent = total;
+    document.getElementById('stat-answered').textContent = answered;
+    document.getElementById('stat-remaining').textContent = total - answered;
+    const acc = state.mcqTotal > 0 ? Math.round((state.mcqCorrect / state.mcqTotal) * 100) : 0;
+    document.getElementById('stat-score').textContent = state.mcqTotal > 0 ? acc + '%' : 'N/A';
+    updateProgress();
+  }
+
+  function updateProgress() {
+    const total = DB_STUDY_DATA.sections.reduce((s, sec) => s + sec.questions.length, 0);
+    const pct = total ? Math.round((state.answeredCards.size / total) * 100) : 0;
+    const fill = document.getElementById('progressFill');
+    const label = document.getElementById('progressLabel');
+    if (fill) fill.style.width = pct + '%';
+    if (label) label.textContent = pct + '%';
+  }
+
+  // ── SECTION ─────────────────────────────────────────────────
+  function setActiveSection(id) {
+    state.activeSection = id;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.id === id));
+    const section = DB_STUDY_DATA.sections.find(s => s.id === id);
+    if (!section) return;
+    const filtered = getFiltered(section);
+    const mc = document.getElementById('mainContent');
+    mc.innerHTML = renderSection(section, filtered);
+  }
+
+  function getFiltered(section) {
+    let qs = section.questions;
+    if (state.searchQuery) {
+      const q = state.searchQuery.toLowerCase();
+      qs = qs.filter(q2 => q2.question.toLowerCase().includes(q) || (q2.answer || '').toLowerCase().includes(q));
+    }
+    if (state.filterType !== 'all') {
+      if (state.filterType === 'unanswered') qs = qs.filter(q => !state.answeredCards.has(q.id));
+      else qs = qs.filter(q => q.type === state.filterType);
+    }
+    return qs;
+  }
+
+  function renderSection(section, questions) {
+    const secAnswered = questions.filter(q => state.answeredCards.has(q.id)).length;
+    const secPct = questions.length > 0 ? Math.round(secAnswered / questions.length * 100) : 0;
+    return `
+      <div class="section-header" style="--section-color:${section.color}">
+        <div class="section-icon-wrap" style="background:${section.color}18;border-color:${section.color}30">
+          ${section.icon}
+        </div>
+        <div class="section-header-info">
+          <h2 style="color:${section.color}">${section.title}</h2>
+          <p>${section.description || questions.length + ' questions in this section'}</p>
+        </div>
+        <div>
+          <div class="section-badge">${secAnswered}/${questions.length}</div>
+          <div class="section-progress-mini" style="margin-top:6px">
+            <div class="section-progress-fill" style="width:${secPct}%"></div>
+          </div>
+          <div class="section-progress-label">${secPct}% done</div>
+        </div>
+      </div>
+      <div class="questions-grid">
+        ${questions.length === 0
+          ? `<div class="empty-state"><h3>No matches</h3><p>Try a different search or filter</p></div>`
+          : questions.map((q, i) => renderCard(q, i + 1, section.color)).join('')
+        }
+      </div>
+    `;
+  }
+
+  function renderCard(q, num, color) {
+    const isOpen = state.openCards.has(q.id);
+    const isAnswered = state.answeredCards.has(q.id);
+    const saved = state.userAnswers[q.id] || '';
+    return `
+      <div class="q-card ${isOpen ? 'open' : ''} ${isAnswered ? 'answered' : ''}" id="card-${q.id}">
+        <div class="q-header" onclick="Portal.toggleCard('${q.id}')">
+          <div class="q-num" style="background:${color}18;color:${color}">${String(num).padStart(2,'0')}</div>
+          <div class="q-title">${escHtml(q.question)}</div>
+          <div class="q-meta">
+            <span class="q-type-badge badge-${q.type}">${q.type.toUpperCase()}</span>
+            ${isAnswered ? '<span class="q-check">✓</span>' : ''}
+          </div>
+          <svg class="q-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+        </div>
+        <div class="q-body">
+          <div class="q-body-inner">
+            ${q.type === 'mcq' ? renderMCQ(q) : renderOpen(q, saved)}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderOpen(q, saved) {
+    return `
+      <div>
+        <div class="answer-label">Your Answer</div>
+        <textarea class="user-textarea" id="inp-${q.id}" placeholder="Type your answer here…" rows="3">${escHtml(saved)}</textarea>
+        <div class="action-row">
+          <button class="btn btn-save btn-sm" onclick="Portal.saveAnswer('${q.id}')">💾 Save</button>
+          <button class="btn btn-show btn-sm" onclick="Portal.showAnswer('${q.id}')">👁 Answer</button>
+          <button class="btn btn-ai btn-sm" id="ai-btn-${q.id}" onclick="Portal.aiExplain('${q.id}')">✦ AI Explain</button>
+        </div>
+      </div>
+      <div id="ar-${q.id}"></div>
+      <div id="aie-${q.id}"></div>
+    `;
+  }
+
+  function renderMCQ(q) {
+    const sel = state.mcqSelected[q.id];
+    const done = !!sel;
+    const opts = q.options.map(opt => {
+      const letter = opt[0];
+      const isCorrect = letter === q.answer;
+      const isSelected = sel === letter;
+      let cls = '';
+      if (done) {
+        if (isSelected && isCorrect) cls = 'correct';
+        else if (isSelected && !isCorrect) cls = 'wrong';
+        else if (isCorrect) cls = 'show-correct';
+      }
+      return `
+        <button class="mcq-option ${cls}" onclick="Portal.selectMCQ('${q.id}','${letter}')" ${done ? 'disabled' : ''}>
+          <div class="mcq-letter">${letter}</div>
+          <div>${escHtml(opt.slice(3))}</div>
+        </button>`;
+    }).join('');
+    const exp = done && q.explanation ? `<div class="mcq-explanation">${escHtml(q.explanation)}</div>` : '';
+    return `
+      <div class="mcq-grid">${opts}</div>
+      <div id="mcq-exp-${q.id}">${exp}</div>
+      <div id="aie-${q.id}"></div>
+      ${done ? `<div class="action-row" style="margin-top:10px"><button class="btn btn-ai btn-sm" id="ai-btn-${q.id}" onclick="Portal.aiExplain('${q.id}')">✦ AI Explain</button></div>` : ''}
+    `;
+  }
+
+  // ── INTERACTIONS ────────────────────────────────────────────
+  function toggleCard(id) {
+    const card = document.getElementById('card-' + id);
+    if (!card) return;
+    if (state.openCards.has(id)) { state.openCards.delete(id); card.classList.remove('open'); }
+    else { state.openCards.add(id); card.classList.add('open'); }
+  }
+
+  function saveAnswer(id) {
+    const inp = document.getElementById('inp-' + id);
+    if (!inp) return;
+    const val = inp.value.trim();
+    state.userAnswers[id] = val;
+    if (val) {
+      state.answeredCards.add(id);
+      document.getElementById('card-' + id)?.classList.add('answered');
+    }
+    saveState(); renderStats();
+    showToast('Answer saved ✓');
+  }
+
+  function showAnswer(id) {
+    const q = findQ(id);
+    if (!q) return;
+    const el = document.getElementById('ar-' + id);
+    if (!el) return;
+    if (el.innerHTML) { el.innerHTML = ''; return; }
+    let content;
+    if (q.type === 'code') {
+      content = `<div class="code-wrap">
+        <button class="code-copy-btn" onclick="Portal.copyCode('${id}')">Copy</button>
+        <span class="code-lang-badge">${q.language || 'sql'}</span>
+        <pre><code id="code-${id}">${escHtml(q.answer)}</code></pre>
+      </div>`;
+    } else {
+      content = `<p class="answer-text">${escHtml(q.answer)}</p>`;
+    }
+    el.innerHTML = `<div class="answer-box correct">
+      <div class="answer-box-header">✅ Correct Answer</div>
+      <div class="answer-box-body">${content}</div>
+    </div>`;
+    state.answeredCards.add(id);
+    document.getElementById('card-' + id)?.classList.add('answered');
+    saveState(); renderStats();
+  }
+
+  function copyCode(id) {
+    const el = document.getElementById('code-' + id);
+    if (el) navigator.clipboard?.writeText(el.textContent).then(() => showToast('Copied ✓'));
+  }
+
+  function selectMCQ(qid, letter) {
+    if (state.mcqSelected[qid]) return;
+    const q = findQ(qid);
+    if (!q) return;
+    state.mcqSelected[qid] = letter;
+    state.answeredCards.add(qid);
+    state.mcqTotal++;
+    if (letter === q.answer) state.mcqCorrect++;
+    saveState(); renderStats();
+
+    // Update UI
+    const opts = document.querySelectorAll(`#card-${qid} .mcq-option`);
+    opts.forEach(btn => {
+      btn.disabled = true;
+      const l = btn.querySelector('.mcq-letter').textContent;
+      btn.className = 'mcq-option';
+      if (l === letter && l === q.answer) btn.classList.add('correct');
+      else if (l === letter) btn.classList.add('wrong');
+      else if (l === q.answer) btn.classList.add('show-correct');
+    });
+    const expEl = document.getElementById('mcq-exp-' + qid);
+    if (expEl && q.explanation) expEl.innerHTML = `<div class="mcq-explanation">${escHtml(q.explanation)}</div>`;
+    document.getElementById('card-' + qid)?.classList.add('answered');
+
+    // Add AI button after MCQ answered
+    const aieEl = document.getElementById('aie-' + qid);
+    if (aieEl && !document.getElementById('ai-btn-' + qid)) {
+      const row = document.createElement('div');
+      row.className = 'action-row'; row.style.marginTop = '10px';
+      row.innerHTML = `<button class="btn btn-ai btn-sm" id="ai-btn-${qid}" onclick="Portal.aiExplain('${qid}')">✦ AI Explain</button>`;
+      aieEl.before(row);
+    }
+  }
+
+  // ── AI EXPLAIN (inline) ─────────────────────────────────────
+  async function aiExplain(id) {
+    const q = findQ(id);
+    if (!q) return;
+    const el = document.getElementById('aie-' + id);
+    if (!el) return;
+    if (el.innerHTML) { el.innerHTML = ''; return; }
+
+    const btn = document.getElementById('ai-btn-' + id);
+    if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Thinking…'; }
+
+    el.innerHTML = `<div class="answer-box ai-box">
+      <div class="answer-box-header">✦ AI Explanation</div>
+      <div class="answer-box-body"><p class="answer-text" id="ai-stream-${id}"><span class="ai-cursor"></span></p></div>
+    </div>`;
+
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          stream: true,
+          system: `You are an expert Advanced Database Systems tutor at the University of Mines and Technology, Ghana. Course: CE/IS 279 by Dr. Eric Affum. Topics: Stored Procedures, Triggers, SQL Functions, Relational Algebra, NoSQL, MongoDB, Database Security (GRANT/REVOKE), Transactions, CAP Theorem. Provide clear, student-friendly explanations with examples. For code, show correct SQL/MongoDB. Keep responses concise (150-200 words). Use plain text with no markdown symbols. If multiple points, use numbered format.`,
+          messages: [{ role: 'user', content: `Explain clearly for a student:\n\nQuestion: ${q.question}\n\n${q.type === 'mcq' ? `Correct Answer: ${q.answer}\n${q.explanation || ''}` : (q.answer ? `Answer: ${q.answer}` : '')}` }]
+        })
+      });
+      if (!res.ok) throw new Error('API error ' + res.status);
+      const reader = res.body.getReader();
+      const dec = new TextDecoder();
+      let full = '';
+      const streamEl = document.getElementById('ai-stream-' + id);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = dec.decode(value);
+        for (const line of chunk.split('\n')) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') continue;
+            try {
+              const parsed = JSON.parse(data);
+              if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
+                full += parsed.delta.text;
+                if (streamEl) streamEl.innerHTML = escHtml(full) + '<span class="ai-cursor"></span>';
+              }
+            } catch(e) {}
+          }
+        }
+      }
+      if (streamEl) streamEl.textContent = full;
+      state.answeredCards.add(id);
+      saveState(); renderStats();
+    } catch(err) {
+      el.innerHTML = `<div class="answer-box ai-box">
+        <div class="answer-box-header">⚠ Error</div>
+        <div class="answer-box-body"><p class="answer-text">Could not connect to AI. Please try again.</p></div>
+      </div>`;
+    }
+    if (btn) { btn.disabled = false; btn.innerHTML = '✦ AI Explain'; }
+  }
+
+  // ── AI TUTOR CHAT ───────────────────────────────────────────
+  function toggleAiPanel() {
+    const panel = document.getElementById('ai-panel');
+    panel.classList.toggle('open');
+    if (panel.classList.contains('open')) {
+      setTimeout(() => document.getElementById('aiChatInput')?.focus(), 100);
+      document.getElementById('aiBadge').style.display = 'none';
+    }
+  }
+
+  function aiChatKeydown(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAiChat(); }
+  }
+
+  async function sendAiChat() {
+    if (state.aiLoading) return;
+    const input = document.getElementById('aiChatInput');
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+    state.aiLoading = true;
+
+    state.aiMessages.push({ role: 'user', content: text });
+    renderAiMessages();
+
+    const sendBtn = document.getElementById('aiSendBtn');
+    sendBtn.disabled = true; sendBtn.innerHTML = '<span class="spinner" style="border-color:rgba(255,255,255,0.3);border-top-color:#fff"></span>';
+
+    // Add loading message
+    const loadId = 'ai-load-' + Date.now();
+    const msgs = document.getElementById('aiMessages');
+    const loadDiv = document.createElement('div');
+    loadDiv.className = 'ai-msg assistant'; loadDiv.id = loadId;
+    loadDiv.innerHTML = '<span class="ai-cursor"></span>';
+    msgs.appendChild(loadDiv);
+    msgs.scrollTop = msgs.scrollHeight;
+
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          stream: true,
+          system: `You are an Advanced Database Systems tutor at the University of Mines and Technology, Ghana. Course: CE/IS 279 by Dr. Eric Affum. Help students understand: Stored Procedures, Triggers, SQL Functions, Relational Algebra, NoSQL, MongoDB, Database Security, Transactions, CAP Theorem. Be friendly, encouraging, and give clear explanations with examples. Use numbered lists when explaining multiple points. Keep answers focused and academic.`,
+          messages: state.aiMessages
+        })
+      });
+
+      const reader = res.body.getReader();
+      const dec = new TextDecoder();
+      let full = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        const chunk = dec.decode(value);
+        for (const line of chunk.split('\n')) {
+          if (line.startsWith('data: ')) {
+            try {
+              const parsed = JSON.parse(line.slice(6));
+              if (parsed.type === 'content_block_delta' && parsed.delta?.text) {
+                full += parsed.delta.text;
+                const el = document.getElementById(loadId);
+                if (el) el.innerHTML = escHtml(full) + '<span class="ai-cursor"></span>';
+                msgs.scrollTop = msgs.scrollHeight;
+              }
+            } catch(e) {}
+          }
+        }
+      }
+
+      const el = document.getElementById(loadId);
+      if (el) el.textContent = full;
+      state.aiMessages.push({ role: 'assistant', content: full });
+
+    } catch(err) {
+      const el = document.getElementById(loadId);
+      if (el) el.textContent = 'Sorry, I encountered an error. Please try again.';
+    }
+
+    state.aiLoading = false;
+    sendBtn.disabled = false; sendBtn.innerHTML = '➤';
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  function renderAiMessages() {
+    const msgs = document.getElementById('aiMessages');
+    const initMsg = '<div class="ai-msg assistant">Hi! I\'m your AI tutor for Advanced Database Systems (CE/IS 279). Ask me anything about stored procedures, triggers, MongoDB, NoSQL, relational algebra, or any topic from Dr. Affum\'s notes. 🎓</div>';
+    msgs.innerHTML = initMsg + state.aiMessages.map(m => `
+      <div class="ai-msg ${m.role}">${escHtml(m.content)}</div>
+    `).join('');
+    msgs.scrollTop = msgs.scrollHeight;
+  }
+
+  // ── FLASHCARDS ──────────────────────────────────────────────
+  function buildFcList() {
+    state.fcList = DB_STUDY_DATA.sections.flatMap(sec =>
+      sec.questions.filter(q => q.type !== 'mcq').map(q => ({ ...q, sectionTitle: sec.title, sectionColor: sec.color }))
+    );
+    // Shuffle
+    for (let i = state.fcList.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [state.fcList[i], state.fcList[j]] = [state.fcList[j], state.fcList[i]];
+    }
+  }
+
+  function openFlashcards() {
+    buildFcList();
+    state.fcIndex = 0;
+    document.getElementById('flashcard-overlay').classList.add('open');
+    renderFc();
+  }
+
+  function closeFlashcards() {
+    document.getElementById('flashcard-overlay').classList.remove('open');
+  }
+
+  function renderFc() {
+    if (!state.fcList.length) return;
+    const q = state.fcList[state.fcIndex];
+    const tag = document.getElementById('fcSectionTag');
+    tag.textContent = q.sectionTitle.split('—')[0].trim();
+    tag.style.background = q.sectionColor + '22';
+    tag.style.color = q.sectionColor;
+    tag.style.border = `1px solid ${q.sectionColor}44`;
+
+    document.getElementById('fcQuestion').textContent = q.question;
+    const ans = document.getElementById('fcAnswer');
+    ans.className = 'fc-answer'; ans.textContent = q.answer || '';
+    document.getElementById('fcRevealBtn').style.display = '';
+    document.getElementById('fcAiBtn').style.display = 'none';
+    document.getElementById('fcGotIt').style.display = 'none';
+    document.getElementById('fcMissed').style.display = 'none';
+    state.fcRevealed = false;
+    const pct = (state.fcIndex + 1) / state.fcList.length * 100;
+    document.getElementById('fcCounter').textContent = `${state.fcIndex + 1} / ${state.fcList.length}`;
+    document.getElementById('fcProgressFill').style.width = pct + '%';
+  }
+
+  function fcReveal() {
+    document.getElementById('fcAnswer').classList.add('visible');
+    document.getElementById('fcRevealBtn').style.display = 'none';
+    document.getElementById('fcAiBtn').style.display = '';
+    document.getElementById('fcGotIt').style.display = '';
+    document.getElementById('fcMissed').style.display = '';
+    state.fcRevealed = true;
+  }
+
+  async function fcAiExplain() {
+    const q = state.fcList[state.fcIndex];
+    if (!q) return;
+    const btn = document.getElementById('fcAiBtn');
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 600,
+          messages: [{
+            role: 'user',
+            content: `Explain this DB question in 3 sentences for a student:\n${q.question}\nAnswer: ${q.answer || ''}`
+          }]
+        })
+      });
+      const data = await res.json();
+      const text = data.content?.[0]?.text || 'Unable to get explanation.';
+      document.getElementById('fcAnswer').textContent = q.answer + '\n\n💡 ' + text;
+    } catch(e) {}
+    btn.disabled = false; btn.innerHTML = '✦ AI Explain';
+  }
+
+  function fcMark(gotIt) {
+    if (gotIt) { state.answeredCards.add(state.fcList[state.fcIndex].id); saveState(); renderStats(); }
+    fcNext();
+  }
+
+  function fcNext() {
+    if (state.fcIndex < state.fcList.length - 1) { state.fcIndex++; renderFc(); }
+    else { showToast('All flashcards done! 🎉'); closeFlashcards(); }
+  }
+
+  function fcPrev() {
+    if (state.fcIndex > 0) { state.fcIndex--; renderFc(); }
+  }
+
+  // ── SEARCH / FILTER ─────────────────────────────────────────
+  function bindSearch() {
+    const inp = document.getElementById('searchInput');
+    if (!inp) return;
+    inp.addEventListener('input', e => {
+      state.searchQuery = e.target.value.trim();
+      refreshSection();
+    });
+  }
+
+  function setFilter(type, el) {
+    state.filterType = type;
+    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    if (el) el.classList.add('active');
+    refreshSection();
+  }
+
+  function refreshSection() {
+    const sec = DB_STUDY_DATA.sections.find(s => s.id === state.activeSection);
+    if (sec) document.getElementById('mainContent').innerHTML = renderSection(sec, getFiltered(sec));
+  }
+
+  // ── KEYBOARD ────────────────────────────────────────────────
+  function bindKeyboard() {
+    document.addEventListener('keydown', e => {
+      if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+      if (e.key >= '1' && e.key <= '5') {
+        const sec = DB_STUDY_DATA.sections[parseInt(e.key) - 1];
+        if (sec) setActiveSection(sec.id);
+      }
+      if (e.key.toLowerCase() === 'f') openFlashcards();
+      if (e.key.toLowerCase() === 'a') toggleAiPanel();
+    });
+  }
+
+  // ── UTILS ────────────────────────────────────────────────────
+  function findQ(id) {
+    for (const s of DB_STUDY_DATA.sections) {
+      const q = s.questions.find(q => q.id === id);
+      if (q) return q;
+    }
+    return null;
+  }
+
+  function escHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+  }
+
+  function showToast(msg) {
+    document.querySelectorAll('.toast').forEach(t => t.remove());
+    const t = document.createElement('div');
+    t.className = 'toast'; t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 2500);
+  }
+
+  function resetProgress() {
+    if (!confirm('Reset all progress? This cannot be undone.')) return;
+    localStorage.removeItem('dbportal_v2');
+    state.answeredCards = new Set();
+    state.userAnswers = {};
+    state.mcqSelected = {};
+    state.mcqCorrect = 0;
+    state.mcqTotal = 0;
+    state.openCards = new Set();
+    renderStats();
+    refreshSection();
+    showToast('Progress reset');
+  }
+
+  return { init, setActiveSection, toggleCard, saveAnswer, showAnswer, copyCode, aiExplain, selectMCQ, toggleAiPanel, aiChatKeydown, sendAiChat, setFilter, openFlashcards, closeFlashcards, fcReveal, fcAiExplain, fcMark, fcNext, fcPrev, resetProgress };
+})();
+
+document.addEventListener('DOMContentLoaded', Portal.init);
+</script>
+</body>
+</html>
