@@ -663,9 +663,6 @@
     <button class="btn btn-ghost btn-sm" onclick="Portal.openFlashcards()">
       <span>⚡</span><span>Flashcards</span>
     </button>
-    <button class="btn btn-ghost btn-sm" onclick="Portal.promptForApiKey()">
-      <span>⚙️</span><span>API Key</span>
-    </button>
     <button class="btn btn-ghost btn-sm" onclick="Portal.resetProgress()">
       <span>🔄</span><span>Reset</span>
     </button>
@@ -847,13 +844,13 @@ const Portal = (() => {
   }
 
   function promptForApiKey() {
-    const key = prompt('Enter your Anthropic Claude API key (from https://console.anthropic.com):\n\n(Note: This will be stored locally in your browser. Never share API keys!)');
+    const key = prompt('Enter your Groq API key (from https://console.groq.com/keys):\n\n(Free tier: 30 requests/minute. Stored locally in your browser only.)');
     if (key && key.trim()) {
       state.apiKey = key.trim();
       localStorage.setItem('anthropic_api_key', state.apiKey);
       alert('✓ API key saved! AI features are now enabled.\n\nTest it by clicking "✦ AI Explain" on any question.');
     } else {
-      alert('AI features require an API key. Get one free at https://console.anthropic.com');
+      alert('Get a free Groq API key at https://console.groq.com/keys');
     }
   }
 
@@ -1147,26 +1144,27 @@ const Portal = (() => {
     try {
       if (!state.apiKey) throw new Error('API key not set');
       const streamEl = document.getElementById('ai-stream-' + id);
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'x-api-key': state.apiKey,
-          'anthropic-version': '2023-06-01'
+          'Authorization': 'Bearer ' + state.apiKey
         },
         body: JSON.stringify({
-          model: 'claude-3-5-sonnet-20241022',
+          model: 'mixtral-8x7b-32768',
           max_tokens: 1000,
-          system: `You are an expert Advanced Database Systems tutor at the University of Mines and Technology, Ghana. Course: CE/IS 279 by Dr. Eric Affum. Topics: Stored Procedures, Triggers, SQL Functions, Relational Algebra, NoSQL, MongoDB, Database Security (GRANT/REVOKE), Transactions, CAP Theorem. Provide clear, student-friendly explanations with examples. For code, show correct SQL/MongoDB. Keep responses concise (150-200 words). Use plain text with no markdown symbols. If multiple points, use numbered format.`,
-          messages: [{ role: 'user', content: `Explain clearly for a student:\n\nQuestion: ${q.question}\n\n${q.type === 'mcq' ? `Correct Answer: ${q.answer}\n${q.explanation || ''}` : (q.answer ? `Answer: ${q.answer}` : '')}` }]
+          messages: [
+            { role: 'system', content: 'You are an expert Advanced Database Systems tutor at the University of Mines and Technology, Ghana. Course: CE/IS 279 by Dr. Eric Affum. Topics: Stored Procedures, Triggers, SQL Functions, Relational Algebra, NoSQL, MongoDB, Database Security (GRANT/REVOKE), Transactions, CAP Theorem. Provide clear, student-friendly explanations with examples. For code, show correct SQL/MongoDB. Keep responses concise (150-200 words). Use plain text with no markdown symbols. If multiple points, use numbered format.' },
+            { role: 'user', content: `Explain clearly for a student:\n\nQuestion: ${q.question}\n\n${q.type === 'mcq' ? `Correct Answer: ${q.answer}\n${q.explanation || ''}` : (q.answer ? `Answer: ${q.answer}` : '')}` }
+          ]
         })
       });
       if (!res.ok) {
-        if (res.status === 401) throw new Error('Invalid API key. Check your Anthropic API key.');
+        if (res.status === 401) throw new Error('Invalid Groq API key. Get one from https://console.groq.com/keys');
         throw new Error('API error ' + res.status);
       }
       const data = await res.json();
-      const full = data.content?.[0]?.text || 'No response';
+      const full = data.choices?.[0]?.message?.content || 'No response';
       if (streamEl) streamEl.textContent = full;
       state.answeredCards.add(id);
       saveState(); renderStats();
@@ -1218,31 +1216,31 @@ const Portal = (() => {
 
     try {
       if (!state.apiKey) throw new Error('API key not set');
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const groqMessages = state.aiMessages.map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content }));
+      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'x-api-key': state.apiKey,
-          'anthropic-version': '2023-06-01'
+          'Authorization': 'Bearer ' + state.apiKey
         },
         body: JSON.stringify({
-          model: 'claude-3-5-sonnet-20241022',
+          model: 'mixtral-8x7b-32768',
           max_tokens: 1000,
-          system: `You are an Advanced Database Systems tutor at the University of Mines and Technology, Ghana. Course: CE/IS 279 by Dr. Eric Affum. Help students understand: Stored Procedures, Triggers, SQL Functions, Relational Algebra, NoSQL, MongoDB, Database Security, Transactions, CAP Theorem. Be friendly, encouraging, and give clear explanations with examples. Use numbered lists when explaining multiple points. Keep answers focused and academic.`,
-          messages: state.aiMessages
+          system: 'You are an Advanced Database Systems tutor at the University of Mines and Technology, Ghana. Course: CE/IS 279 by Dr. Eric Affum. Help students understand: Stored Procedures, Triggers, SQL Functions, Relational Algebra, NoSQL, MongoDB, Database Security, Transactions, CAP Theorem. Be friendly, encouraging, and give clear explanations with examples. Use numbered lists when explaining multiple points. Keep answers focused and academic.',
+          messages: groqMessages
         })
       });
 
       if (!res.ok) throw new Error('API error ' + res.status);
       const respData = await res.json();
-      const full = respData.content?.[0]?.text || 'No response';
+      const full = respData.choices?.[0]?.message?.content || 'No response';
       const el = document.getElementById(loadId);
       if (el) el.textContent = full;
       state.aiMessages.push({ role: 'assistant', content: full });
 
     } catch(err) {
       const el = document.getElementById(loadId);
-      if (el) el.textContent = 'Error: ' + (err.message || 'Failed to get response. Check your Gemini API key.');
+      if (el) el.textContent = 'Error: ' + (err.message || 'Failed to get response. Check your Groq API key.');
     }
 
     state.aiLoading = false;
@@ -1320,15 +1318,14 @@ const Portal = (() => {
     btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
     try {
       if (!state.apiKey) throw new Error('API key not set');
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
+      const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'x-api-key': state.apiKey,
-          'anthropic-version': '2023-06-01'
+          'Authorization': 'Bearer ' + state.apiKey
         },
         body: JSON.stringify({
-          model: 'claude-3-5-sonnet-20241022',
+          model: 'mixtral-8x7b-32768',
           max_tokens: 600,
           messages: [{
             role: 'user',
@@ -1338,10 +1335,10 @@ const Portal = (() => {
       });
       if (!res.ok) throw new Error('API error ' + res.status);
       const data = await res.json();
-      const text = data.content?.[0]?.text || 'Unable to get explanation.';
+      const text = data.choices?.[0]?.message?.content || 'Unable to get explanation.';
       document.getElementById('fcAnswer').textContent = q.answer + '\n\n💡 ' + text;
     } catch(e) {
-      alert('AI Error: ' + (e.message || 'Check your Anthropic API key.'));
+      alert('AI Error: ' + (e.message || 'Check your Groq API key at https://console.groq.com/keys'));
     }
     btn.disabled = false; btn.innerHTML = '✦ AI Explain';
   }
